@@ -191,27 +191,36 @@ export default function App() {
 
                 <div className="space-y-4">
                   {/* Receiver Info */}
-                  <div className="bg-black/30 rounded-3xl p-5 backdrop-blur-md border border-white/5">
-                    <div className="flex justify-between items-center text-sm mb-2">
-                      <span className="text-white/60 font-medium">Receiver</span>
-                      <span className="font-bold text-xs text-black bg-white/90 px-2.5 py-1 rounded-full">
-                        #{cycleInfo.currentReceiver?.order}
-                      </span>
-                    </div>
-                    <p className="font-bold text-2xl mb-4 tracking-wide text-white">
-                      {cycleInfo.currentReceiver?.name}
-                    </p>
-                    
-                    {/* Progress Bar */}
-                    <div className="w-full bg-white/10 rounded-full h-1.5 mb-2 overflow-hidden">
-                      <div 
-                        className="bg-white h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
-                        style={{ width: `${(cycleInfo.dayInCycle / CONSTANTS.CYCLE_DAYS) * 100}%` }}
-                      ></div>
-                    </div>
-                    <div className="flex justify-between text-[11px] text-white/50 font-medium">
-                      <span>Day {cycleInfo.dayInCycle}</span>
-                      <span>Target: 15</span>
+                  <div className="bg-black/30 rounded-3xl p-5 backdrop-blur-md border border-white/5 relative overflow-hidden">
+                    <div className="relative z-10">
+                        <div className="flex justify-between items-center text-sm mb-2">
+                            <span className="text-white/60 font-medium">Receiver</span>
+                            <span className="font-bold text-xs text-black bg-white/90 px-2.5 py-1 rounded-full">
+                                #{cycleInfo.currentReceiver?.order}
+                            </span>
+                        </div>
+                        <div className="flex items-center gap-3 mb-4">
+                            {cycleInfo.currentReceiver?.avatar && (
+                                <div className="w-12 h-12 rounded-full border-2 border-white/20 overflow-hidden shrink-0">
+                                    <img src={cycleInfo.currentReceiver.avatar} alt="" className="w-full h-full object-cover" />
+                                </div>
+                            )}
+                            <p className="font-bold text-2xl tracking-wide text-white truncate">
+                                {cycleInfo.currentReceiver?.name}
+                            </p>
+                        </div>
+                        
+                        {/* Progress Bar */}
+                        <div className="w-full bg-white/10 rounded-full h-1.5 mb-2 overflow-hidden">
+                            <div 
+                                className="bg-white h-full rounded-full shadow-[0_0_10px_rgba(255,255,255,0.5)]" 
+                                style={{ width: `${(cycleInfo.dayInCycle / CONSTANTS.CYCLE_DAYS) * 100}%` }}
+                            ></div>
+                        </div>
+                        <div className="flex justify-between text-[11px] text-white/50 font-medium">
+                            <span>Day {cycleInfo.dayInCycle}</span>
+                            <span>Target: 15</span>
+                        </div>
                     </div>
                   </div>
 

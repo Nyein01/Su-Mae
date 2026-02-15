@@ -2,6 +2,7 @@ export interface Member {
   id: string;
   name: string;
   order: number; // 1 to 5
+  avatar?: string; // Base64 string of the image
 }
 
 export interface DailyRecord {
