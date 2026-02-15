@@ -6,20 +6,33 @@ export const formatDateKey = (date: Date): string => {
 };
 
 export const getCycleInfo = (startDateStr: string, currentDate: Date, members: Member[]) => {
-  const startDate = parseISO(startDateStr);
+  // Validate inputs
+  if (!startDateStr || !members || members.length === 0) return null;
+
+  let startDate: Date;
+  try {
+    startDate = parseISO(startDateStr);
+    if (isNaN(startDate.getTime())) return null; // Invalid date check
+  } catch (e) {
+    return null;
+  }
+
   const diffDays = differenceInDays(startOfDay(currentDate), startOfDay(startDate));
   
-  // If negative, it hasn't started
+  // If negative, it hasn't started yet
   if (diffDays < 0) return null;
 
   const currentCycleNumber = Math.floor(diffDays / CONSTANTS.CYCLE_DAYS) + 1;
   const dayInCycle = (diffDays % CONSTANTS.CYCLE_DAYS) + 1;
   const daysUntilPayout = CONSTANTS.CYCLE_DAYS - dayInCycle;
   
-  // Calculate who takes the money this cycle
-  // Cycle 1 -> Order 1, Cycle 2 -> Order 2, Cycle 6 -> Order 1
-  const memberIndex = (currentCycleNumber - 1) % CONSTANTS.TOTAL_MEMBERS;
-  const currentReceiver = members.find(m => m.order === memberIndex + 1);
+  // Sort members by order to ensure deterministic rotation, regardless of array order
+  const sortedMembers = [...members].sort((a, b) => a.order - b.order);
+
+  // Calculate receiver based on sorted list index
+  // Cycle 1 -> Index 0, Cycle 2 -> Index 1... Cycle 6 -> Index 0
+  const receiverIndex = (currentCycleNumber - 1) % sortedMembers.length;
+  const currentReceiver = sortedMembers[receiverIndex];
 
   const isPayoutDay = dayInCycle === CONSTANTS.CYCLE_DAYS;
 
@@ -34,6 +47,8 @@ export const getCycleInfo = (startDateStr: string, currentDate: Date, members: M
 };
 
 export const generateCalendarDays = (startDateStr: string, daysToShow: number = 45) => {
+  if (!startDateStr) return [];
+  
   const startDate = parseISO(startDateStr);
   const days = [];
   
@@ -42,7 +57,9 @@ export const generateCalendarDays = (startDateStr: string, daysToShow: number = 
     const dayNumber = i + 1;
     const isPayout = dayNumber % CONSTANTS.CYCLE_DAYS === 0;
     
-    // Determine cycle owner
+    // Determine cycle owner order (1-based)
+    // This assumes 5 members. If dynamic, this function needs members array.
+    // Keeping as is for now based on CONSTANTS.
     const cycleIndex = Math.floor(i / CONSTANTS.CYCLE_DAYS);
     const orderIndex = (cycleIndex % CONSTANTS.TOTAL_MEMBERS) + 1;
 
