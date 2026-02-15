@@ -1,0 +1,5 @@
+{
+  "name": "Su Mae Manager",
+  "description": "A savings circle management app for 5 people with daily tracking, custom rotation order, and payout alerts.",
+  "requestFramePermissions": []
+}
