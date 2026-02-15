@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Users, Calendar as CalendarIcon, Wallet, Settings, Sparkles, ChevronLeft, ChevronRight, Loader2, CloudOff } from 'lucide-react';
+import { Users, Calendar as CalendarIcon, Wallet, Settings, Sparkles, ChevronLeft, ChevronRight, Loader2, CloudOff, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
 import { format } from 'date-fns';
 import { MemberSetup } from './components/MemberSetup';
@@ -22,6 +22,7 @@ export default function App() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   
   const [activeTab, setActiveTab] = useState<'home' | 'calendar' | 'settings'>('home');
   const [currentDateView, setCurrentDateView] = useState(new Date());
@@ -89,9 +90,12 @@ export default function App() {
     return getCycleInfo(state.startDate, currentDateView, state.members);
   }, [state.startDate, currentDateView, state.members]);
 
-  const resetData = async () => {
-    if (confirm("Reset ALL data? This cannot be undone.")) {
+  const confirmReset = async () => {
+    try {
       await setDoc(doc(db, "circles", DOC_ID), { members: [], startDate: '', records: {} });
+      setShowResetConfirm(false);
+    } catch (e) {
+      alert("Failed to reset: " + e);
     }
   };
 
@@ -274,7 +278,7 @@ export default function App() {
                 Clear all data and start over.
               </p>
               <button 
-                onClick={resetData}
+                onClick={() => setShowResetConfirm(true)}
                 className="w-full py-3 border border-red-500/30 text-red-400 rounded-xl hover:bg-red-500/10 font-medium transition-colors"
               >
                 Reset Cloud Data
@@ -283,6 +287,37 @@ export default function App() {
           </div>
         )}
       </main>
+
+      {/* Reset Confirmation Modal */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="glass-panel w-full max-w-sm p-6 rounded-3xl space-y-4 shadow-2xl border-red-500/20">
+            <div className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center text-red-500 mx-auto">
+              <AlertTriangle size={24} />
+            </div>
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-white">Reset Everything?</h3>
+              <p className="text-sm text-white/60 mt-2">
+                This will permanently delete all members, payment records, and history. This action cannot be undone.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button 
+                onClick={() => setShowResetConfirm(false)}
+                className="p-3 rounded-xl bg-white/5 hover:bg-white/10 text-white font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmReset}
+                className="p-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow-lg shadow-red-900/20 transition-colors"
+              >
+                Yes, Reset
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Floating Bottom Navigation - Darker and Less Bright */}
       <div className="fixed bottom-0 left-0 right-0 p-6 z-40 pointer-events-none">
