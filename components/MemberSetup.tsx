@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { Member, CONSTANTS } from '../types';
-import { Save, User, ChevronUp, ChevronDown, Camera, X, Calendar, Sparkles, ArrowRight } from 'lucide-react';
+import { ChevronUp, ChevronDown, Camera, X, Calendar, Sparkles, ArrowRight, Edit2, Shuffle } from 'lucide-react';
 import clsx from 'clsx';
 
 interface Props {
@@ -9,13 +9,26 @@ interface Props {
   existingStartDate: string;
 }
 
+const CUTE_AVATARS = [
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Felix&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Aneka&backgroundColor=c0aede",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Willow&backgroundColor=d1d4f9",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Shadow&backgroundColor=ffdfbf",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Scooter&backgroundColor=ffd5dc",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Milo&backgroundColor=c0aede",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Gizmo&backgroundColor=b6e3f4",
+  "https://api.dicebear.com/9.x/adventurer/svg?seed=Pepper&backgroundColor=ffd5dc"
+];
+
 export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, existingStartDate }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [activeMemberIdForUpload, setActiveMemberIdForUpload] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
 
   const [localMembers, setLocalMembers] = useState<Member[]>(() => {
-    const current = initialMembers.length > 0 ? [...initialMembers] : [];
+    let current = initialMembers.length > 0 ? [...initialMembers] : [];
+    
+    // Fill to total members
     while (current.length < CONSTANTS.TOTAL_MEMBERS) {
       current.push({
         id: `mem-${Date.now()}-${current.length}`,
@@ -23,7 +36,13 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
         order: current.length + 1
       });
     }
-    return current.slice(0, CONSTANTS.TOTAL_MEMBERS);
+    current = current.slice(0, CONSTANTS.TOTAL_MEMBERS);
+
+    // Assign cute default avatars if missing
+    return current.map((m, i) => ({
+      ...m,
+      avatar: m.avatar || CUTE_AVATARS[i % CUTE_AVATARS.length]
+    }));
   });
 
   const [startDate, setStartDate] = useState<string>(
@@ -45,6 +64,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
     newMembers[index].order = newMembers[swapIndex].order;
     newMembers[swapIndex].order = tempOrder;
 
+    // Swap elements
     [newMembers[index], newMembers[swapIndex]] = [newMembers[swapIndex], newMembers[index]];
     
     setLocalMembers(newMembers);
@@ -52,6 +72,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
 
   const triggerImageUpload = (memberId: string) => {
     setActiveMemberIdForUpload(memberId);
+    if (fileInputRef.current) fileInputRef.current.value = '';
     fileInputRef.current?.click();
   };
 
@@ -65,7 +86,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
           const canvas = document.createElement('canvas');
           const ctx = canvas.getContext('2d');
           
-          const maxSize = 200; // Increased slightly for quality
+          const maxSize = 300; 
           let width = img.width;
           let height = img.height;
           
@@ -98,17 +119,26 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
     }
   };
 
+  const randomizeAvatar = (e: React.MouseEvent, memberId: string) => {
+    e.stopPropagation();
+    const randomAvatar = CUTE_AVATARS[Math.floor(Math.random() * CUTE_AVATARS.length)];
+    setLocalMembers(prev => prev.map(m => 
+      m.id === memberId ? { ...m, avatar: randomAvatar } : m
+    ));
+  };
+
   const removeImage = (e: React.MouseEvent, memberId: string) => {
     e.stopPropagation();
+    // Reset to a default avatar instead of undefined
+    const defaultAvatar = CUTE_AVATARS[0];
     setLocalMembers(prev => prev.map(m => 
-      m.id === memberId ? { ...m, avatar: undefined } : m
+      m.id === memberId ? { ...m, avatar: defaultAvatar } : m
     ));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (localMembers.some(m => !m.name.trim())) {
-      // Simple shake animation effect could be added here
       alert("Please enter names for all members.");
       return;
     }
@@ -124,7 +154,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
           <Sparkles size={24} className="text-primary-400" />
         </div>
         <h2 className="text-2xl font-bold text-white tracking-tight">Configure Circle</h2>
-        <p className="text-white/40 text-sm">Set the rotation order & start date</p>
+        <p className="text-white/40 text-sm">Set order & add photos</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -132,6 +162,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
           type="file" 
           ref={fileInputRef}
           accept="image/*"
+          capture="user"
           className="hidden"
           onChange={handleImageChange}
         />
@@ -181,20 +212,29 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
               {/* Avatar Upload */}
               <div 
                 onClick={() => triggerImageUpload(member.id)}
-                className="relative w-14 h-14 flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer bg-gradient-to-br from-white/5 to-white/0 border border-white/10 hover:border-primary-500/50 transition-all group-hover:shadow-[0_0_15px_rgba(255,255,255,0.1)]"
+                className={clsx(
+                    "relative w-14 h-14 flex-shrink-0 rounded-2xl overflow-hidden cursor-pointer transition-all duration-300 group-hover:shadow-glow",
+                    member.avatar ? "border border-white/20" : "bg-white/5 border border-dashed border-white/20 hover:border-primary-500 hover:bg-white/10"
+                )}
               >
                 {member.avatar ? (
                   <>
                     <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
+                    {/* Hover Overlay */}
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 gap-2">
+                       <Edit2 size={14} className="text-white drop-shadow-md" />
+                    </div>
+                    {/* Randomize Button (Bottom Right) */}
                     <div 
-                      onClick={(e) => removeImage(e, member.id)}
-                      className="absolute inset-0 bg-black/60 backdrop-blur-[2px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300"
+                        onClick={(e) => randomizeAvatar(e, member.id)}
+                        title="Random Avatar"
+                        className="absolute bottom-0 right-0 p-1 bg-black/50 hover:bg-primary-500 transition-colors opacity-0 group-hover:opacity-100 rounded-tl-lg"
                     >
-                      <X size={18} className="text-white drop-shadow-lg" />
+                        <Shuffle size={10} className="text-white" />
                     </div>
                   </>
                 ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center text-white/20 group-hover:text-primary-400 transition-colors">
+                  <div className="w-full h-full flex flex-col items-center justify-center text-white/30 group-hover:text-primary-400 transition-colors">
                     <Camera size={20} />
                   </div>
                 )}
@@ -204,7 +244,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
               <div className="flex-1 min-w-0">
                 <input
                   type="text"
-                  placeholder="Member Name"
+                  placeholder={`Member ${index + 1}`}
                   value={member.name}
                   onFocus={() => setFocusedId(member.id)}
                   onBlur={() => setFocusedId(null)}
@@ -212,7 +252,7 @@ export const MemberSetup: React.FC<Props> = ({ members: initialMembers, onSave, 
                   className="w-full bg-transparent border-none focus:ring-0 text-white font-medium text-lg placeholder-white/20 p-0"
                 />
                 <div className="text-[10px] text-white/30 font-medium truncate mt-0.5">
-                  Gets payout in Cycle {index + 1}
+                  Payout in Cycle {index + 1}
                 </div>
               </div>
 

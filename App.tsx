@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Users, Calendar as CalendarIcon, Wallet, Settings, Sparkles, ChevronLeft, ChevronRight, Loader2, CloudOff, AlertTriangle } from 'lucide-react';
 import clsx from 'clsx';
-import { format } from 'date-fns';
+import { format, addDays, parseISO } from 'date-fns';
 import { MemberSetup } from './components/MemberSetup';
 import { DailyChecklist } from './components/DailyChecklist';
 import { CalendarView } from './components/CalendarView';
@@ -89,6 +89,31 @@ export default function App() {
     if (!state.startDate || state.members.length === 0) return null;
     return getCycleInfo(state.startDate, currentDateView, state.members);
   }, [state.startDate, currentDateView, state.members]);
+
+  const cycleSavedAmount = useMemo(() => {
+    if (!cycleInfo || !state.startDate) return 0;
+    
+    // Find the start date of the specific cycle being viewed
+    const globalStart = parseISO(state.startDate);
+    const cycleIndex = cycleInfo.cycleNumber - 1;
+    const cycleStartDate = addDays(globalStart, cycleIndex * CONSTANTS.CYCLE_DAYS);
+    
+    let total = 0;
+    // Sum up all payments for the 15 days of this cycle
+    for (let i = 0; i < CONSTANTS.CYCLE_DAYS; i++) {
+        const d = addDays(cycleStartDate, i);
+        const key = formatDateKey(d);
+        const record = state.records[key];
+        if (record && record.payments) {
+            const dailyTotal = Object.values(record.payments).filter(Boolean).length * CONSTANTS.DAILY_AMOUNT;
+            total += dailyTotal;
+        }
+    }
+    return total;
+  }, [cycleInfo, state.startDate, state.records]);
+
+  // Derived display amount: reset to 0 if we reached the full target
+  const displayCycleAmount = cycleSavedAmount >= CONSTANTS.TOTAL_PAYOUT ? 0 : cycleSavedAmount;
 
   const confirmReset = async () => {
     try {
@@ -181,7 +206,7 @@ export default function App() {
                       {cycleInfo.isPayoutDay ? "PAYOUT DAY" : "NEXT PAYOUT"}
                     </p>
                     <h2 className="text-4xl font-bold tracking-tight text-white">
-                      {cycleInfo.isPayoutDay ? "Withdaw Now" : `${cycleInfo.daysUntilPayout} Days Left`}
+                      {cycleInfo.isPayoutDay ? "Withdraw Now" : `${cycleInfo.daysUntilPayout} Days Left`}
                     </h2>
                   </div>
                   <div className="p-3 bg-white/10 rounded-full backdrop-blur-md border border-white/10">
@@ -224,11 +249,25 @@ export default function App() {
                     </div>
                   </div>
 
+                  {/* Savings Accumulator */}
                   <div className="flex justify-between items-center px-4 py-3 bg-white/5 rounded-2xl border border-white/5">
-                     <span className="text-sm text-white/70 font-medium">Total Pot</span>
-                     <span className="font-bold text-xl text-white">
-                       {CONSTANTS.TOTAL_PAYOUT.toLocaleString()} <span className="text-sm font-normal text-white/50">Baht</span>
-                     </span>
+                     <div className="flex flex-col">
+                        <span className="text-sm text-white/70 font-medium">Cycle Savings</span>
+                        <div className="w-24 h-1 bg-white/10 rounded-full mt-1.5 overflow-hidden">
+                            <div 
+                                className={clsx("h-full rounded-full", cycleInfo.isPayoutDay ? "bg-gold-400" : "bg-primary-500")}
+                                style={{ width: `${Math.min((displayCycleAmount / CONSTANTS.TOTAL_PAYOUT) * 100, 100)}%` }}
+                            />
+                        </div>
+                     </div>
+                     <div className="text-right">
+                        <span className="font-bold text-xl text-white">
+                            {displayCycleAmount.toLocaleString()} <span className="text-sm font-normal text-white/50">฿</span>
+                        </span>
+                        <div className="text-[10px] text-white/30 uppercase tracking-widest mt-0.5">
+                            Goal: {CONSTANTS.TOTAL_PAYOUT.toLocaleString()}
+                        </div>
+                     </div>
                   </div>
                 </div>
               </div>

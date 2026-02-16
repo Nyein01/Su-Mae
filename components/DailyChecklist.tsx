@@ -64,19 +64,19 @@ export const DailyChecklist: React.FC<Props> = ({ members, record, dateLabel, on
               <div className="flex items-center gap-4">
                 {/* Avatar with Order */}
                 <div className={clsx(
-                  "w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold transition-all duration-500 relative overflow-hidden",
+                  "w-12 h-12 rounded-2xl flex items-center justify-center text-sm font-bold transition-all duration-500 relative overflow-hidden shadow-lg",
                   isPaid 
                     ? "bg-primary-500 text-black shadow-[0_0_15px_rgba(34,197,94,0.4)] scale-105" 
-                    : "bg-white/10 text-white/50 group-hover:text-white scale-100"
+                    : "bg-white/10 text-white/50 group-hover:text-white scale-100",
+                  member.avatar && "border border-white/10 bg-white/5"
                 )}>
                   {member.avatar ? (
                     <img src={member.avatar} alt={member.name} className="w-full h-full object-cover" />
                   ) : (
                     <span>{member.order}</span>
                   )}
-                  {/* Order badge if avatar exists */}
                   {member.avatar && (
-                     <div className="absolute bottom-0 right-0 bg-black/60 px-1 rounded-tl text-[8px] text-white">
+                     <div className="absolute bottom-0 right-0 bg-black/70 px-1.5 py-0.5 rounded-tl-lg text-[9px] text-white font-bold backdrop-blur-sm">
                         #{member.order}
                      </div>
                   )}
@@ -102,14 +102,27 @@ export const DailyChecklist: React.FC<Props> = ({ members, record, dateLabel, on
               {/* Action Button - Spring Animation */}
               <div 
                 className={clsx(
-                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-sm relative",
+                  "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-sm relative overflow-hidden",
                   isPaid 
-                    ? "bg-primary-500 text-black shadow-[0_4px_12px_rgba(34,197,94,0.4)] rotate-0 scale-100" 
-                    : "bg-white/10 text-white/20 -rotate-90 scale-90 group-hover:bg-white/20 group-hover:text-white/60"
+                    ? "bg-primary-500 text-black shadow-[0_4px_12px_rgba(34,197,94,0.4)]" 
+                    : "bg-white/10 text-white/20 group-hover:bg-white/20 group-hover:text-white/60"
                 )}
-                style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
               >
-                {isPaid ? <Check size={20} strokeWidth={3} /> : <X size={20} />}
+                {/* Check Icon (Paid) */}
+                <div 
+                    className={clsx("absolute inset-0 flex items-center justify-center transition-all duration-500", isPaid ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-50")}
+                    style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                >
+                    <Check size={20} strokeWidth={4} />
+                </div>
+                
+                {/* X Icon (Unpaid) */}
+                <div 
+                    className={clsx("absolute inset-0 flex items-center justify-center transition-all duration-500", !isPaid ? "opacity-100 rotate-0 scale-100" : "opacity-0 rotate-90 scale-50")}
+                    style={{ transitionTimingFunction: 'cubic-bezier(0.34, 1.56, 0.64, 1)' }}
+                >
+                    <X size={20} strokeWidth={2.5} />
+                </div>
               </div>
             </div>
           );

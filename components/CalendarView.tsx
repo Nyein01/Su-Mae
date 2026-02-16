@@ -99,7 +99,7 @@ export const CalendarView: React.FC<Props> = ({ state }) => {
                     // Border styling (Today overrides standard borders)
                     isCurrentDay 
                         ? "ring-2 ring-primary-500 shadow-[0_0_40px_-5px_rgba(34,197,94,0.25)] z-10 scale-[1.02]" 
-                        : "border", // Payout day handles its own border color in the bg line above if needed, but clsx handles conflicts
+                        : "border", // Payout day handles its own border color above
                     // If standard day and not today, ensure border is present
                     !dayObj.isPayoutDay && !isCurrentDay && "border-white/5"
                   )}
@@ -149,7 +149,9 @@ export const CalendarView: React.FC<Props> = ({ state }) => {
                             </div>
                             <div className="flex items-center gap-2">
                                {receiver?.avatar && (
-                                 <img src={receiver.avatar} alt={receiver.name} className="w-5 h-5 rounded-full object-cover border border-gold-400/50" />
+                                 <div className="w-5 h-5 rounded-full border border-gold-400/50 overflow-hidden shrink-0 bg-white/10">
+                                   <img src={receiver.avatar} alt={receiver.name} className="w-full h-full object-cover" />
+                                 </div>
                                )}
                               <div className="text-lg font-bold text-white leading-tight">
                                   {receiver?.name}
@@ -236,7 +238,7 @@ export const CalendarView: React.FC<Props> = ({ state }) => {
                           title={m.name}
                         >
                             {m.avatar && hasPaid && (
-                                <img src={m.avatar} className="w-full h-full object-cover opacity-60" alt="" />
+                                <img src={m.avatar} className="w-full h-full object-cover opacity-80" alt="" />
                             )}
                         </div>
                       );
